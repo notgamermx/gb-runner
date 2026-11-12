@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101523">
+    <meta name="description" content="GB Runner is a browser-based Game Boy, Game Boy Color, and Game Boy Advance emulator.">
+    <title>GB Runner | Play your games</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: #f5f7fb;
+            background: #101523;
+            font-synthesis: none;
+            text-rendering: optimizeLegibility;
+            --muted: #99a3b8;
+            --line: rgba(255, 255, 255, 0.09);
+            --accent: #c4f05b;
+            --accent-strong: #d7ff76;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 30px 22px 38px;
+            background:
+                radial-gradient(ellipse at 50% -20%, rgba(116, 87, 255, 0.2), transparent 55%),
+                radial-gradient(ellipse at 100% 80%, rgba(87, 160, 255, 0.08), transparent 35%),
+                #101523;
+        }
+
+        button, .upload-button { font: inherit; }
+
+        .site-header, main, .site-footer {
+            width: 100%;
+            max-width: 1240px;
+        }
+
+        .site-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 48px;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 11px;
+            color: inherit;
+            font-size: 1.1rem;
+            font-weight: 850;
+            letter-spacing: -0.04em;
+            text-decoration: none;
+        }
+
+        .brand-mark {
+            display: grid;
+            width: 38px;
+            height: 38px;
+            place-items: center;
+            border: 1px solid rgba(196, 240, 91, 0.5);
+            border-radius: 12px;
+            background: rgba(196, 240, 91, 0.1);
+            color: var(--accent);
+            font-size: 0.85rem;
+            letter-spacing: -0.08em;
+            box-shadow: 0 0 28px rgba(196, 240, 91, 0.12);
+        }
+
+        .header-note, .eyebrow {
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .header-note { color: var(--muted); }
+
+        .intro { margin-bottom: 22px; }
+        .eyebrow { margin-bottom: 9px; color: var(--accent); }
+
+        h1 {
+            margin: 0;
+            max-width: 760px;
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 850;
+            letter-spacing: -0.065em;
+            line-height: 1.05;
+        }
+
+        .intro p {
+            margin: 12px 0 0;
+            color: var(--muted);
+            max-width: 560px;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .formats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .format {
+            padding: 6px 10px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.035);
+            color: #cbd3e1;
+            font-size: 0.7rem;
+            font-weight: 750;
+        }
+
+        .console {
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            background: linear-gradient(150deg, rgba(31, 39, 57, 0.98), rgba(23, 29, 44, 0.98));
+            box-shadow: 0 32px 90px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+        }
+
+        .console-top {
+            display: flex;
+            min-height: 58px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 12px 18px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .game-info {
+            display: flex;
+            min-width: 0;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-light {
+            width: 9px;
+            height: 9px;
+            flex: 0 0 auto;
+            border-radius: 50%;
+            background: #78839a;
+        }
+
+        .status-light.loading { background: #f3c764; box-shadow: 0 0 14px rgba(243, 199, 100, 0.55); }
+        .status-light.ready { background: #a9e85b; box-shadow: 0 0 14px rgba(169, 232, 91, 0.55); }
+        .status-light.error { background: #ff777e; }
+
+        #status {
+            overflow: hidden;
+            color: #cbd3e1;
+            font-size: 0.78rem;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .console-actions { display: flex; flex: 0 0 auto; gap: 8px; }
+
+        .small-button {
+            min-height: 34px;
+            padding: 7px 11px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #dce2ed;
+            font-size: 0.7rem;
+            font-weight: 750;
+            cursor: pointer;
+        }
+
+        .small-button:hover { border-color: rgba(196, 240, 91, 0.45); }
+        .small-button:focus-visible, .upload-button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+        .small-button:disabled { cursor: not-allowed; opacity: 0.5; }
+
+        .screen {
+            position: relative;
+            display: grid;
+            min-height: 520px;
+            place-items: center;
+            padding: 18px;
+            background:
+                radial-gradient(ellipse at center, rgba(45, 59, 83, 0.35), transparent 65%),
+                #0a0d14;
+        }
+
+        #game {
+            width: 100%;
+            max-width: 1360px;
+            height: min(82vh, 900px);
+            min-height: 480px;
+            margin: auto;
+        }
+
+        #game:empty { display: none; }
+        #gba-player {
+            display: flex;
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #gba-canvas {
+            display: block;
+            width: min(100%, 1080px);
+            height: auto;
+            max-height: min(720px, calc(100dvh - 180px));
+            margin: auto;
+            aspect-ratio: 3 / 2;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            background: #000;
+        }
+
+        .emulator-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 14px auto 0;
+        }
+
+        .touch-controls {
+            display: grid;
+            width: min(100%, 390px);
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(3, 42px);
+            gap: 5px;
+            margin: 20px auto 0;
+        }
+
+        .touch-button {
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #e8edf7;
+            font-size: 0.8rem;
+            font-weight: 800;
+            touch-action: none;
+            user-select: none;
+        }
+
+        .touch-button:active { background: rgba(196, 240, 91, 0.25); }
+        .touch-up { grid-column: 2; grid-row: 1; }
+        .touch-left { grid-column: 1; grid-row: 2; }
+        .touch-right { grid-column: 3; grid-row: 2; }
+        .touch-down { grid-column: 2; grid-row: 3; }
+        .touch-select { grid-column: 4; grid-row: 1; }
+        .touch-start { grid-column: 5; grid-row: 1; }
+        .touch-b { grid-column: 4; grid-row: 2; }
+        .touch-a { grid-column: 5; grid-row: 2; }
+        .touch-l { grid-column: 4; grid-row: 3; }
+        .touch-r { grid-column: 5; grid-row: 3; }
+
+        #screen:fullscreen {
+            position: fixed;
+            z-index: 9999;
+            inset: 0;
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            min-height: 0;
+            flex-direction: column;
+            justify-content: center;
+            padding: 10px;
+            border-radius: 0;
+            background: #080b12;
+        }
+
+        #screen:fullscreen #game {
+            display: flex;
+            height: auto;
+            min-height: 0;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        #screen:fullscreen #gba-canvas {
+            max-height: min(720px, calc(100dvh - 110px));
+        }
+
+        #screen:fullscreen .touch-controls { display: none; }
+
+        #screen:fullscreen .emulator-controls {
+            margin-top: 8px;
+        }
+
+        #screen:fullscreen #gba-player { justify-content: center; }
+        #screen:fullscreen .emulator-controls .small-button { min-height: 30px; }
+
+        .welcome {
+            width: min(100%, 460px);
+            padding: 38px 30px;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: linear-gradient(145deg, rgba(27, 35, 51, 0.96), rgba(19, 25, 38, 0.96));
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+            text-align: center;
+        }
+
+        .welcome[hidden] { display: none; }
+
+        .game-icon {
+            display: grid;
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 18px;
+            place-items: center;
+            border: 1px solid rgba(196, 240, 91, 0.26);
+            border-radius: 20px;
+            background: rgba(196, 240, 91, 0.08);
+            color: var(--accent);
+            font-size: 1.7rem;
+        }
+
+        .welcome h2 { margin: 0; font-size: 1.18rem; letter-spacing: -0.03em; }
+
+        .welcome p {
+            margin: 10px 0 20px;
+            color: var(--muted);
+            font-size: 0.83rem;
+            line-height: 1.6;
+        }
+
+        .upload-button {
+            display: inline-flex;
+            min-height: 44px;
+            align-items: center;
+            justify-content: center;
+            padding: 0 18px;
+            border: 0;
+            border-radius: 11px;
+            background: var(--accent);
+            color: #17200c;
+            font-size: 0.8rem;
+            font-weight: 850;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(196, 240, 91, 0.16);
+            transition: filter 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .upload-button:hover { transform: translateY(-1px); filter: brightness(1.06); box-shadow: 0 11px 30px rgba(196, 240, 91, 0.24); }
+        .upload-button:disabled { cursor: wait; opacity: 0.65; }
+        #rom-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+
+        .help-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 14px 18px;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            font-size: 0.7rem;
+            line-height: 1.5;
+        }
+
+        .help-row strong { color: #dce2ed; font-weight: 750; }
+
+        button, a, label { -webkit-tap-highlight-color: transparent; }
+        :focus-visible { outline: 3px solid var(--accent-strong); outline-offset: 3px; }
+
+        .site-footer {
+            margin-top: 18px;
+            color: #7e899e;
+            font-size: 0.7rem;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 18px 12px 26px; }
+            .site-header { margin-bottom: 30px; }
+            .header-note { font-size: 0.56rem; }
+            .screen { min-height: 350px; padding: 10px; }
+            #game { height: 62vh; min-height: 320px; }
+            #gba-canvas { max-height: min(720px, calc(100dvh - 260px)); }
+            #screen:fullscreen { padding: 10px; }
+            #screen:fullscreen #gba-canvas { max-height: min(720px, calc(100dvh - 260px)); }
+            #screen:fullscreen .touch-controls { display: grid; }
+            .welcome { padding: 28px 18px; }
+            .console-top { padding: 10px 12px; }
+            .help-row { flex-direction: column; gap: 5px; padding: 12px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+        }
+
+        /* A more deliberate landing layout: a focused intro beside a compact play deck. */
+        body {
+            padding: 24px clamp(18px, 5vw, 76px) 30px;
+            background:
+                radial-gradient(ellipse at 9% 18%, rgba(196, 240, 91, 0.12), transparent 28%),
+                radial-gradient(ellipse at 92% 8%, rgba(116, 87, 255, 0.22), transparent 36%),
+                #0d1120;
+        }
+        .site-header, main, .site-footer { max-width: 1320px; }
+        .site-header { margin-bottom: clamp(36px, 7vh, 76px); }
+        .brand-mark { border-radius: 13px 13px 13px 4px; }
+        main {
+            display: grid;
+            grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.55fr);
+            align-items: center;
+            gap: clamp(26px, 5vw, 72px);
+        }
+        .intro { margin: 0; }
+        .eyebrow { display: flex; align-items: center; gap: 9px; }
+        .eyebrow::before { width: 20px; height: 2px; background: var(--accent); content: ""; }
+        h1 { font-size: clamp(2.7rem, 5vw, 5rem); line-height: 0.98; }
+        .intro p { margin-top: 18px; font-size: 1.04rem; }
+        .formats { margin-top: 24px; gap: 9px; }
+        .format { padding: 8px 12px; background: rgba(255,255,255,.055); }
+        .console { border-color: rgba(255,255,255,.12); border-radius: 18px; }
+        .console-top { min-height: 52px; background: rgba(255,255,255,.025); }
+        .screen { min-height: 480px; padding: 24px; }
+        #game { height: min(68vh, 760px); min-height: 420px; }
+        .welcome { border-radius: 20px; }
+        .help-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; }
+        .help-row span:last-child { grid-column: 1 / -1; }
+        .site-footer { margin-top: 26px; }
+        @media (max-width: 850px) {
+            body { padding: 20px 18px 28px; }
+            .site-header { margin-bottom: 36px; }
+            main { grid-template-columns: 1fr; gap: 28px; }
+            .intro { max-width: 680px; }
+            h1 { max-width: 620px; font-size: clamp(2.8rem, 9vw, 4.3rem); }
+            .screen { min-height: 420px; }
+            #game { height: 60vh; min-height: 360px; }
+        }
+        @media (max-width: 600px) {
+            body { padding: 18px 12px 24px; }
+            .site-header { margin-bottom: 30px; }
+            main { gap: 24px; }
+            h1 { font-size: clamp(2.7rem, 13vw, 3.6rem); }
+            .screen { min-height: 350px; }
+            .help-row { display: flex; }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="GB Runner home">
+            <span class="brand-mark" aria-hidden="true">GB</span>
+            <span>GB Runner</span>
+        </a>
+        <span class="header-note">Your games · your browser</span>
+    </header>
+
+    <main>
+        <section class="intro" aria-labelledby="page-title">
+            <div class="eyebrow">Pocket-sized play</div>
+            <h1 id="page-title">Your games. One runner.</h1>
+            <p>Choose a game file from your device and play it right in your browser.</p>
+            <div class="formats" aria-label="Supported game systems">
+                <span class="format">Game Boy · .gb</span>
+                <span class="format">Game Boy Color · .gbc</span>
+                <span class="format">Game Boy Advance · .gba</span>
+            </div>
+        </section>
+
+        <section class="console" aria-label="Game screen">
+            <div class="console-top">
+                <div class="game-info">
+                    <span class="status-light" id="statusLight" aria-hidden="true"></span>
+                    <span id="status" role="status" aria-live="polite">Ready for a game</span>
+                </div>
+                <div class="console-actions">
+                    <button class="small-button" id="fullscreenButton" type="button" hidden>Full screen</button>
+                    <button class="small-button" id="changeGameButton" type="button" hidden>Change game</button>
+                </div>
+            </div>
+            <div class="screen" id="screen">
+                <div class="welcome" id="welcome">
+                    <div class="game-icon" aria-hidden="true">▶</div>
+                    <h2>Ready when you are</h2>
+                    <p>Select a compatible game file. It stays in your browser and is not uploaded to this website.</p>
+                    <label class="upload-button" for="rom-input" id="uploadLabel">Choose a game file</label>
+                    <input id="rom-input" type="file" accept=".gb,.gbc,.gba">
+                </div>
+                <div id="game"></div>
+            </div>
+            <div class="help-row">
+                <span id="controlsHelp"><strong>Controls:</strong> arrows + Z/X/A/S/Enter/Backspace.</span>
+                <span><strong>GBA fullscreen:</strong> scales up to 1080 × 720.</span>
+                <span>ROM files stay on your device.</span>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        Only use game files you have the right to use. GB Runner does not provide or host game files.
+        GBA emulation uses <a href="https://www.npmjs.com/package/@gba-kit/gba-browser" target="_blank" rel="noreferrer">gba-kit</a>;
+        GB/GBC emulation uses the EmulatorJS CDN. An internet connection is required.
+    </footer>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>
