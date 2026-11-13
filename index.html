@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#101523">
-    <meta name="description" content="GB Runner is a browser-based Game Boy, Game Boy Color, and Game Boy Advance emulator.">
+    <meta name="description" content="GB Runner is a browser-based Game Boy, Game Boy Color, Game Boy Advance, and Nintendo DS emulator.">
     <title>GB Runner | Play your games</title>
     <style>
         :root {
@@ -46,6 +46,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 20px;
             margin-bottom: 48px;
         }
 
@@ -220,6 +221,15 @@
             image-rendering: pixelated;
             image-rendering: crisp-edges;
             background: #000;
+        }
+
+        .nds-player-frame {
+            display: block;
+            width: 100%;
+            height: min(82vh, 900px);
+            min-height: 480px;
+            border: 0;
+            background: #080b12;
         }
 
         .emulator-controls {
@@ -467,6 +477,7 @@
                 <span class="format">Game Boy · .gb</span>
                 <span class="format">Game Boy Color · .gbc</span>
                 <span class="format">Game Boy Advance · .gba</span>
+                <span class="format">Nintendo DS · .nds</span>
             </div>
         </section>
 
@@ -487,7 +498,7 @@
                     <h2>Ready when you are</h2>
                     <p>Select a compatible game file. It stays in your browser and is not uploaded to this website.</p>
                     <label class="upload-button" for="rom-input" id="uploadLabel">Choose a game file</label>
-                    <input id="rom-input" type="file" accept=".gb,.gbc,.gba">
+                    <input id="rom-input" type="file" accept=".gb,.gbc,.gba,.nds">
                 </div>
                 <div id="game"></div>
             </div>
@@ -502,7 +513,7 @@
     <footer class="site-footer">
         Only use game files you have the right to use. GB Runner does not provide or host game files.
         GBA emulation uses <a href="https://www.npmjs.com/package/@gba-kit/gba-browser" target="_blank" rel="noreferrer">gba-kit</a>;
-        GB/GBC emulation uses the EmulatorJS CDN. An internet connection is required.
+        GB/GBC emulation uses the EmulatorJS CDN; Nintendo DS uses GB Runner's custom player UI and locally bundled Pilas-melonDS engine. An internet connection is required.
     </footer>
 
     <script type="module" src="/src/main.js"></script>

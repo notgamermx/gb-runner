@@ -19,10 +19,11 @@ const elements = {
     controlsHelp: document.getElementById('controlsHelp'),
 };
 
-const supportedExtensions = new Set(['gb', 'gbc', 'gba']);
+const supportedExtensions = new Set(['gb', 'gbc', 'gba', 'nds']);
 const emulatorDataPath = 'https://cdn.emulatorjs.org/stable/data/';
 let gbaEmulator = null;
 let gbaRomHash = null;
+let ndsRomUrl = null;
 let loading = false;
 
 function setStatus(message, state = '') {
@@ -118,9 +119,9 @@ function renderSaveSlots(slots, button) {
     };
 }
 
-async function startGba(file) {
-    setStatus(`Reading ${file.name}…`, 'loading');
-    const rom = await file.arrayBuffer();
+async function startGba(source, fileName = source.name, autoStart = false) {
+    setStatus(`Reading ${fileName}…`, 'loading');
+    const rom = source instanceof ArrayBuffer ? source : await source.arrayBuffer();
     const player = document.createElement('div');
     player.id = 'gba-player';
     player.innerHTML = '<canvas id="gba-canvas" width="240" height="160" aria-label="Game Boy Advance screen"></canvas>';
@@ -141,7 +142,7 @@ async function startGba(file) {
 
     gbaEmulator.loadRom(rom);
     showGameControls();
-    setStatus(file.name, 'ready');
+    setStatus(fileName, 'ready');
     elements.controlsHelp.innerHTML = '<strong>GBA controls:</strong> arrows · Z/X = A/B · A/S = R/L · Enter/Backspace = Start/Select.';
 
     player.querySelector('#powerButton').addEventListener('click', () => {
@@ -187,22 +188,24 @@ async function startGba(file) {
 
     window.addEventListener('keydown', event => gbaEmulator?.handleKeyDown(event));
     window.addEventListener('keyup', event => gbaEmulator?.handleKeyUp(event));
+
+    if (autoStart) gbaEmulator.run();
 }
 
-function startGb(file) {
-    setStatus(`Loading ${file.name}…`, 'loading');
+function startGb(source, fileName = source.name) {
+    setStatus(`Loading ${fileName}…`, 'loading');
     elements.controlsHelp.innerHTML = '<strong>GB/GBC controls:</strong> use the emulator on-screen controls or keyboard.';
 
     window.EJS_player = '#game';
-    window.EJS_gameName = file.name.replace(/\.[^.]+$/, '');
+    window.EJS_gameName = fileName.replace(/\.[^.]+$/, '');
     window.EJS_biosUrl = '';
-    window.EJS_gameUrl = file;
+    window.EJS_gameUrl = source;
     window.EJS_core = 'gb';
     window.EJS_pathtodata = emulatorDataPath;
     window.EJS_startOnLoaded = true;
     window.EJS_ready = () => {
         showGameControls();
-        setStatus(file.name, 'ready');
+        setStatus(fileName, 'ready');
         setLoading(false);
     };
 
@@ -216,17 +219,41 @@ function startGb(file) {
     document.body.appendChild(loader);
 }
 
+async function startNds(source, fileName = source.name) {
+    const rom = source instanceof ArrayBuffer ? source : await source.arrayBuffer();
+    if (ndsRomUrl) URL.revokeObjectURL(ndsRomUrl);
+    ndsRomUrl = URL.createObjectURL(new Blob([rom], { type: 'application/octet-stream' }));
+
+    const frame = document.createElement('iframe');
+    frame.className = 'nds-player-frame';
+    frame.title = `Nintendo DS player: ${fileName}`;
+    frame.allow = 'autoplay; fullscreen';
+    frame.allowFullscreen = true;
+    const emulatorUrl = new URL('/nds/index.html', window.location.origin);
+    emulatorUrl.searchParams.set('rom', ndsRomUrl);
+    emulatorUrl.searchParams.set('name', fileName);
+    frame.src = emulatorUrl.href;
+
+    elements.game.replaceChildren(frame);
+    showGameControls();
+    setStatus(fileName, 'ready');
+    elements.controlsHelp.innerHTML = '<strong>Nintendo DS controls:</strong> arrows + Z/X/A/S/Enter/Backspace, or the on-screen controls on touch devices.';
+}
+
 async function launchGame(file) {
     if (loading) return;
     const extension = file.name.split('.').pop()?.toLowerCase();
     if (!supportedExtensions.has(extension)) {
-        setStatus('Unsupported file. Choose a .gb, .gbc, or .gba game.', 'error');
+        setStatus('Unsupported file. Choose a .gb, .gbc, .gba, or .nds game.', 'error');
         return;
     }
 
     setLoading(true);
     try {
-        if (extension === 'gba') {
+        if (extension === 'nds') {
+            await startNds(file);
+            setLoading(false);
+        } else if (extension === 'gba') {
             await startGba(file);
             setLoading(false);
         } else {
@@ -284,3 +311,22 @@ document.addEventListener('fullscreenchange', () => {
 });
 
 elements.changeGameButton.addEventListener('click', () => window.location.reload());
+
+const localGameProfiles = {
+    blue: { title: 'Pokémon Blue Version', accept: '.gb,.gbc' },
+    emerald: { title: 'Pokémon Emerald Version', accept: '.gba' },
+    leafgreen: { title: 'Pokémon LeafGreen Version', accept: '.gba' },
+    ruby: { title: 'Pokémon Ruby Version', accept: '.gba' },
+    sapphire: { title: 'Pokémon Sapphire Version', accept: '.gba' },
+};
+
+const selectedLocalGame = new URLSearchParams(window.location.search).get('pick');
+const localGameProfile = localGameProfiles[selectedLocalGame];
+if (localGameProfile) {
+    elements.welcome.querySelector('h2').textContent = `Choose your copy of ${localGameProfile.title}`;
+    elements.welcome.querySelector('p').textContent =
+        `Select a compatible ${localGameProfile.accept} file from your device. It stays in your browser and is not uploaded to this website.`;
+    elements.uploadLabel.textContent = `Choose ${localGameProfile.title} file`;
+    elements.input.accept = localGameProfile.accept;
+    setStatus(`Ready for your local copy of ${localGameProfile.title}.`, 'ready');
+}

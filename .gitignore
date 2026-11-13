@@ -2,9 +2,9 @@
 node_modules/
 yarn.lock
 bun.lockb
-
-# Cloudflare
-.wrangler/
+.env
+.env.*
+!.env.example
 
 # IDE
 .vscode/

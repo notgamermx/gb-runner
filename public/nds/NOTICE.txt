@@ -1,0 +1,8 @@
+Pilas-melonDS
+Copyright (c) 2026 José Pilas
+Source project: https://github.com/josepilas/pilas-melonds
+License: Mozilla Public License 2.0 (see LICENSE-MPL-2.0.txt)
+
+The upstream browser frontend is included locally so Nintendo DS emulation is
+served from this site. Its ROM autoload query accepts an optional `name`
+parameter in addition to the upstream same-origin `rom` parameter.
